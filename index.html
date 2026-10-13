@@ -40,6 +40,7 @@
     .steps b { color: #fff; }
     .steps + .steps { margin-top: 12px; }
     .steps .mine { font-weight: 400; text-transform: none; color: var(--muted); }
+    .steps a { color: #fff; font-weight: 600; }
     [hidden] { display: none !important; }
   </style>
 </head>
@@ -121,6 +122,14 @@
           "Tap the <b>Share</b> button (the square with an arrow pointing up).",
           "Scroll down and tap <b>Add to Home Screen</b>.",
           "Tap <b>Add</b>. The Essig MFG icon appears on your home screen."]],
+        // Backup for iPhones that show a letter instead of the logo (iOS 27.2 on Nate's phone, 10/13):
+        // a Web Clip profile carries the icon inside it, so iOS doesn't have to download it.
+        iphone2: ["iPhone backup: if you see a letter instead of the logo", [
+          "Delete the letter icon: press and hold it, tap <b>Remove App</b>, then <b>Delete from Home Screen</b>.",
+          'In Safari, tap <a href="EssigMFG.mobileconfig">Download the Essig MFG app profile</a>, then tap <b>Allow</b>.',
+          "Open <b>Settings</b> and tap <b>Profile Downloaded</b> near the top.",
+          "Tap <b>Install</b>, enter your passcode, then <b>Install</b> again. It says <b>Not Verified</b>: that's expected, it only adds this one icon.",
+          "Open My Tasks from the new Essig MFG icon."]],
         android: ["Add to your Android home screen", [
           "Open this page in <b>Chrome</b>.",
           "Tap <b>Install app</b> above, or the <b>&#8942;</b> menu (top right), then <b>Install app</b> (some phones say <b>Add to Home screen</b>).",
