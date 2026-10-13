@@ -3,7 +3,7 @@
 // has one. It caches the launcher's own small files so the icon opens instantly;
 // the My Tasks page itself (script.google.com) is never cached.
 // Bump VERSION whenever a launcher file changes, so phones pick up the new copy.
-const VERSION = "essig-shop-v1";
+const VERSION = "essig-shop-v2";   // v2 (10/13): rounded-square icons
 const FILES = ["./", "./index.html", "./manifest.webmanifest", "./icons/icon-192.png", "./icons/apple-touch-icon.png"];
 
 self.addEventListener("install", e => {
