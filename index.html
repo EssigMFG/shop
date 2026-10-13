@@ -36,9 +36,8 @@
     .steps ol { margin: 0; padding-left: 22px; }
     .steps li { margin: 4px 0; }
     .steps b { color: #fff; }
-    .other { margin-top: 14px; font-size: 14px; }
-    .other summary { cursor: pointer; color: var(--ink-muted); }
-    .other .steps { margin-top: 10px; }
+    .steps + .steps { margin-top: 12px; }
+    .steps .mine { font-weight: 400; text-transform: none; color: var(--muted); }
     [hidden] { display: none !important; }
   </style>
 </head>
@@ -60,11 +59,7 @@
       <a class="btn" id="openWeb" href="#">Open My Tasks</a>
       <button class="btn sec" id="installBtn" type="button" hidden>Install app</button>
 
-      <div class="steps" id="howto"></div>
-      <details class="other">
-        <summary>Steps for other devices</summary>
-        <div id="howtoOthers"></div>
-      </details>
+      <div id="howto"></div>
     </section>
   </main>
 
@@ -128,20 +123,19 @@
           "Open this page in <b>Chrome</b>.",
           "Tap <b>Install app</b> above, or the <b>&#8942;</b> menu (top right), then <b>Install app</b> (some phones say <b>Add to Home screen</b>).",
           "Tap <b>Install</b>. The Essig MFG icon appears on your home screen."]],
-        edge: ["Install on Windows (Microsoft Edge)", [
-          "Click <b>Install app</b> above, or the <b>&#8943;</b> menu (top right), then <b>Apps</b>, then <b>Install this site as an app</b>.",
-          "Click <b>Install</b>. Essig MFG Shop opens in its own window and is added to the Start menu.",
-          "To pin it: right-click <b>Essig MFG Shop</b> in the Start menu and choose <b>Pin to taskbar</b> or <b>Pin to Start</b>."]],
         chrome: ["Install on Windows (Google Chrome)", [
           "Click <b>Install app</b> above, or the <b>&#8942;</b> menu (top right), then <b>Cast, save, and share</b>, then <b>Install page as app</b>.",
           "Click <b>Install</b>. Essig MFG Shop opens in its own window and is added to the Start menu and desktop.",
+          "To pin it: right-click <b>Essig MFG Shop</b> in the Start menu and choose <b>Pin to taskbar</b> or <b>Pin to Start</b>."]],
+        edge: ["Install on Windows (Microsoft Edge)", [
+          "Click <b>Install app</b> above, or the <b>&#8943;</b> menu (top right), then <b>Apps</b>, then <b>Install this site as an app</b>.",
+          "Click <b>Install</b>. Essig MFG Shop opens in its own window and is added to the Start menu.",
           "To pin it: right-click <b>Essig MFG Shop</b> in the Start menu and choose <b>Pin to taskbar</b> or <b>Pin to Start</b>."]]
-      };
+      };   // every device listed, always in this order (phones first, Nate 10/13)
       const mine = iOS ? "iphone" : android ? "android" : edge ? "edge" : "chrome";
-      const block = k => "<h2>" + steps[k][0] + "</h2><ol>" + steps[k][1].map(s => "<li>" + s + "</li>").join("") + "</ol>";
-      $("howto").innerHTML = block(mine);
-      $("howtoOthers").innerHTML = Object.keys(steps).filter(k => k !== mine)
-        .map(k => '<div class="steps">' + block(k) + "</div>").join("");
+      $("howto").innerHTML = Object.keys(steps).map(k => '<div class="steps"><h2>' + steps[k][0] +
+        (k === mine ? ' <span class="mine">(this device)</span>' : "") + "</h2><ol>" +
+        steps[k][1].map(s => "<li>" + s + "</li>").join("") + "</ol></div>").join("");
     }
   </script>
 </body>
