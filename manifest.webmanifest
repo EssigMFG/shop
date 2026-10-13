@@ -3,7 +3,7 @@
   "short_name": "Essig MFG",
   "description": "Essig MFG shop schedule: My Tasks, Team, Hours.",
   "id": "./",
-  "start_url": "./?app=1",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#aeb3bb",

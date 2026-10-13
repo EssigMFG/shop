@@ -10,7 +10,9 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
   <link rel="icon" type="image/png" sizes="48x48" href="icons/favicon-48.png">
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <!-- iPhone icon: opaque 180x180 (iOS rounds it). ?v= forces iPhones to fetch a changed icon. -->
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png?v=4">
+  <link rel="apple-touch-icon-precomposed" sizes="180x180" href="icons/apple-touch-icon.png?v=4">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Essig MFG">
@@ -72,10 +74,10 @@
 
     if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
 
-    // Installed app = opened from its icon. start_url carries ?app=1; display-mode covers Android/Windows,
-    // navigator.standalone covers iPhone.
-    const isApp = new URLSearchParams(location.search).has("app")
-      || matchMedia("(display-mode: standalone)").matches
+    // Installed app = opened from its icon: display-mode covers Android/Windows, navigator.standalone covers
+    // iPhone. Never decide this from the URL: iOS 26 loads start_url in the background while adding the app
+    // to the home screen, and redirecting that load to Google left iOS with no icon (the navy "E", 10/13).
+    const isApp = matchMedia("(display-mode: standalone)").matches
       || matchMedia("(display-mode: window-controls-overlay)").matches
       || navigator.standalone === true;
 

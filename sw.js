@@ -3,8 +3,8 @@
 // has one. It caches the launcher's own small files so the icon opens instantly;
 // the My Tasks page itself (script.google.com) is never cached.
 // Bump VERSION whenever a launcher file changes, so phones pick up the new copy.
-const VERSION = "essig-shop-v3";   // v3 (10/13): all install steps listed, phones first
-const FILES = ["./", "./index.html", "./manifest.webmanifest", "./icons/icon-192.png", "./icons/apple-touch-icon.png"];
+const VERSION = "essig-shop-v4";   // v4 (10/13): iPhone icon fix (no URL-based redirect, sized touch icon)
+const FILES = ["./", "./index.html", "./manifest.webmanifest", "./icons/icon-192.png", "./icons/apple-touch-icon.png?v=4"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
