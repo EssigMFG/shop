@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Essig MFG Shop</title>
+  <!-- H7 launcher: gives the My Tasks page an Essig MFG app icon on iPhone, Android and Windows.
+       The icon and name come from this page (and manifest.webmanifest); tapping the app opens
+       the live My Tasks web app, which still signs people in with their essigmfg.com account. -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="48x48" href="icons/favicon-48.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Essig MFG">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#1a1b36">
+  <style>
+    /* Same fixed look as the My Tasks page (no light/dark switching). */
+    :root { --bg: #aeb3bb; --ink: #1a1b36; --ink-muted: #3b4150; --brand-navy: #1a1b36; --brand-red: #9a2020;
+            --card: rgba(30, 35, 44, 0.8); --text: #eceff4; --muted: #a2abbb; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--ink);
+                 font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    main { max-width: 560px; margin: 0 auto; padding: 24px 16px 40px; text-align: center; }
+    .logo { width: min(70vw, 300px); height: auto; display: block; margin: 8px auto 4px; }
+    h1 { font-size: 22px; margin: 0 0 4px; color: var(--brand-navy); }
+    .sub { color: var(--ink-muted); font-size: 14px; }
+    .btn { display: inline-block; font: inherit; font-weight: 600; background: var(--brand-red); color: #fff; border: 0;
+           border-radius: 10px; padding: 12px 22px; margin: 18px 6px 0; text-decoration: none; cursor: pointer; }
+    .btn.sec { background: transparent; color: var(--brand-navy); border: 2px solid var(--brand-navy); }
+    .steps { text-align: left; background: var(--card); color: var(--text); border-left: 4px solid var(--brand-red);
+             border-radius: 10px; padding: 14px 18px; margin-top: 26px; }
+    .steps h2 { font-size: 15px; margin: 0 0 8px; letter-spacing: .03em; text-transform: uppercase; }
+    .steps ol { margin: 0; padding-left: 22px; }
+    .steps li { margin: 4px 0; }
+    .steps b { color: #fff; }
+    .other { margin-top: 14px; font-size: 14px; }
+    .other summary { cursor: pointer; color: var(--ink-muted); }
+    .other .steps { margin-top: 10px; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <main>
+    <img class="logo" src="icon.svg" alt="Essig MFG">
+
+    <!-- Shown when opened from the home screen / Start menu (installed app) -->
+    <section id="appView" hidden>
+      <h1>My Tasks</h1>
+      <div class="sub" id="appMsg">Opening...</div>
+      <a class="btn" id="openApp" href="#" hidden>Open My Tasks</a>
+    </section>
+
+    <!-- Shown in a normal browser tab: open the page, or install the app -->
+    <section id="webView" hidden>
+      <h1>Essig MFG Shop</h1>
+      <div class="sub">Your tasks, the team board and job hours. Sign in with your essigmfg.com Google account.</div>
+      <a class="btn" id="openWeb" href="#">Open My Tasks</a>
+      <button class="btn sec" id="installBtn" type="button" hidden>Install app</button>
+
+      <div class="steps" id="howto"></div>
+      <details class="other">
+        <summary>Steps for other devices</summary>
+        <div id="howtoOthers"></div>
+      </details>
+    </section>
+  </main>
+
+  <script>
+    // The live My Tasks web app (People!I2 on the live sheet). Change it here if the deployment ever changes.
+    const MY_TASKS_URL = "https://script.google.com/a/macros/essigmfg.com/s/AKfycby26EECrHrTDdZoayEw8cQ9zuoNulVCeHzgiMZ6qHs78JacoCln5r8oM-sQdLnOit8h/exec";
+
+    const $ = id => document.getElementById(id);
+    $("openApp").href = $("openWeb").href = MY_TASKS_URL;
+
+    if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+
+    // Installed app = opened from its icon. start_url carries ?app=1; display-mode covers Android/Windows,
+    // navigator.standalone covers iPhone.
+    const isApp = new URLSearchParams(location.search).has("app")
+      || matchMedia("(display-mode: standalone)").matches
+      || matchMedia("(display-mode: window-controls-overlay)").matches
+      || navigator.standalone === true;
+
+    if (isApp) {
+      $("appView").hidden = false;
+      // Go straight to My Tasks the first time. If the person comes back here (the app's back/close
+      // button returns to this page), show a button instead of bouncing them out again.
+      let opened = false;
+      try { opened = sessionStorage.getItem("essigOpened") === "1"; sessionStorage.setItem("essigOpened", "1"); } catch (e) {}
+      if (opened) {
+        $("appMsg").textContent = "Tap below to open your tasks.";
+        $("openApp").hidden = false;
+      } else {
+        setTimeout(() => location.replace(MY_TASKS_URL), 350);
+      }
+    } else {
+      $("webView").hidden = false;
+      showSteps();
+    }
+
+    // Android Chrome and Windows Edge/Chrome: a one-tap Install button when the browser allows it.
+    let installEvent = null;
+    addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvent = e; $("installBtn").hidden = false; });
+    $("installBtn").addEventListener("click", async () => {
+      if (!installEvent) return;
+      installEvent.prompt();
+      await installEvent.userChoice;
+      installEvent = null;
+      $("installBtn").hidden = true;
+    });
+    addEventListener("appinstalled", () => { $("installBtn").hidden = true; });
+
+    function showSteps() {
+      const ua = navigator.userAgent;
+      const iOS = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+      const android = /Android/.test(ua);
+      const edge = /Edg\//.test(ua);
+      const steps = {
+        iphone: ["Add to your iPhone home screen", [
+          "Open this page in <b>Safari</b>.",
+          "Tap the <b>Share</b> button (the square with an arrow pointing up).",
+          "Scroll down and tap <b>Add to Home Screen</b>.",
+          "Tap <b>Add</b>. The Essig MFG icon appears on your home screen."]],
+        android: ["Add to your Android home screen", [
+          "Open this page in <b>Chrome</b>.",
+          "Tap <b>Install app</b> above, or the <b>&#8942;</b> menu (top right), then <b>Install app</b> (some phones say <b>Add to Home screen</b>).",
+          "Tap <b>Install</b>. The Essig MFG icon appears on your home screen."]],
+        edge: ["Install on Windows (Microsoft Edge)", [
+          "Click <b>Install app</b> above, or the <b>&#8943;</b> menu (top right), then <b>Apps</b>, then <b>Install this site as an app</b>.",
+          "Click <b>Install</b>. Essig MFG Shop opens in its own window and is added to the Start menu.",
+          "To pin it: right-click <b>Essig MFG Shop</b> in the Start menu and choose <b>Pin to taskbar</b> or <b>Pin to Start</b>."]],
+        chrome: ["Install on Windows (Google Chrome)", [
+          "Click <b>Install app</b> above, or the <b>&#8942;</b> menu (top right), then <b>Cast, save, and share</b>, then <b>Install page as app</b>.",
+          "Click <b>Install</b>. Essig MFG Shop opens in its own window and is added to the Start menu and desktop.",
+          "To pin it: right-click <b>Essig MFG Shop</b> in the Start menu and choose <b>Pin to taskbar</b> or <b>Pin to Start</b>."]]
+      };
+      const mine = iOS ? "iphone" : android ? "android" : edge ? "edge" : "chrome";
+      const block = k => "<h2>" + steps[k][0] + "</h2><ol>" + steps[k][1].map(s => "<li>" + s + "</li>").join("") + "</ol>";
+      $("howto").innerHTML = block(mine);
+      $("howtoOthers").innerHTML = Object.keys(steps).filter(k => k !== mine)
+        .map(k => '<div class="steps">' + block(k) + "</div>").join("");
+    }
+  </script>
+</body>
+</html>
