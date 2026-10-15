@@ -3,7 +3,7 @@
 // has one. It caches the launcher's own small files so the icon opens instantly;
 // the My Tasks page itself (script.google.com) is never cached.
 // Bump VERSION whenever a launcher file changes, so phones pick up the new copy.
-const VERSION = "essig-shop-v7";   // v7 (10/14): app icon tile lighter gray (#e8eaed) to match the My Tasks page
+const VERSION = "essig-shop-v8";   // v8 (10/15): push notifications (push.html turns them on); v7: lighter icon tile
 const FILES = ["./", "./index.html", "./manifest.webmanifest", "./icons/icon-192.png", "./icons/apple-touch-icon.png?v=5"];
 
 self.addEventListener("install", e => {
@@ -23,4 +23,23 @@ self.addEventListener("fetch", e => {
   e.respondWith(fetch(e.request)
     .then(res => { const copy = res.clone(); caches.open(VERSION).then(c => c.put(e.request, copy)); return res; })
     .catch(() => caches.match(e.request, { ignoreSearch: true })));
+});
+
+// NEW (10/15, H10): push notifications. The shop schedule script sends an encrypted message
+// ({ title, body, url, tag }); show it, and open the app at that link when it's tapped. Reminders
+// (due today, overdue, clock out, weekly, test) replace their previous copy; everything else stacks.
+const REPLACE_TAGS = ["dueToday", "overdue", "clockOut", "weekly", "test"];
+
+self.addEventListener("push", e => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch (err) { d = { body: e.data ? e.data.text() : "" }; }
+  const opts = { body: d.body || "", icon: "icons/icon-192.png", data: { url: d.url || "./" } };
+  if (REPLACE_TAGS.indexOf(d.tag) !== -1) { opts.tag = d.tag; opts.renotify = true; }
+  e.waitUntil(self.registration.showNotification(d.title || "Essig MFG", opts));
+});
+
+self.addEventListener("notificationclick", e => {
+  e.notification.close();
+  const url = (e.notification.data && e.notification.data.url) || "./";
+  e.waitUntil(clients.openWindow(url));
 });
