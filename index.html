@@ -48,6 +48,16 @@
   <main>
     <img class="logo" src="logo.svg" alt="Essig MFG">
 
+    <!-- NEW (10/15, H10): first open of the installed app on a device: one tap to turn on notifications
+         (phones only show their Allow box after a tap). Never shown again on that device once answered. -->
+    <section id="pushView" hidden>
+      <h1>Notifications</h1>
+      <div class="sub">Essig MFG sends you notifications about your tasks: new tasks, due dates, answers to your requests.</div>
+      <button class="btn" id="pushGo" type="button">Continue</button>
+      <a class="btn sec" id="pushSkip" href="#">Not now</a>
+      <div class="sub" id="pushMsg"></div>
+    </section>
+
     <!-- Shown when opened from the home screen / Start menu (installed app) -->
     <section id="appView" hidden>
       <h1>My Tasks</h1>
@@ -82,7 +92,55 @@
       || matchMedia("(display-mode: window-controls-overlay)").matches
       || navigator.standalone === true;
 
-    if (isApp) {
+    // NEW (10/15, H10): notifications on at first open (Nate: "on by default as soon as the app gets installed").
+    // The live app's public push key (script property VAPID_PUB of the live project; it is meant to be public).
+    // If the live keys are ever made again, put the new one here.
+    const PUSH_KEY = "BIpWY0CXuebNVuSU1DLxcDudOdFYXg30hBC01H64jMYYX_aCjP-6pqjX4LMCWOY81MC0Ym-LviCW4zNLwe0-lks";
+    const canPush = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+    let pushAsked = false;
+    try { pushAsked = localStorage.getItem("essigPushAsked") === "1"; } catch (e) {}
+    function markAsked() { try { localStorage.setItem("essigPushAsked", "1"); sessionStorage.setItem("essigOpened", "1"); } catch (e) {} }
+    function b64uToBytes(s) {
+      s = s.replace(/-/g, "+").replace(/_/g, "/");
+      while (s.length % 4) s += "=";
+      const b = atob(s), u = new Uint8Array(b.length);
+      for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i);
+      return u;
+    }
+    function deviceLabel() {
+      const ua = navigator.userAgent;
+      const ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+      return (ios ? (/iPhone/.test(ua) ? "iPhone" : "iPad") : /Android/.test(ua) ? "Android" : /Windows/.test(ua) ? "Windows" : /Mac/.test(ua) ? "Mac" : "Device") +
+        (/Edg\//.test(ua) ? " Edge" : /Chrome\//.test(ua) && !ios ? " Chrome" : ios ? " app" : "");
+    }
+    async function turnOnPush() {
+      $("pushGo").disabled = true;
+      markAsked();
+      try {
+        const perm = await Notification.requestPermission();   // straight from the tap, so the phone shows its Allow box
+        if (perm !== "granted") { location.replace(MY_TASKS_URL); return; }
+        $("pushMsg").textContent = "Turning on notifications...";
+        await navigator.serviceWorker.register("sw.js");
+        const reg = await navigator.serviceWorker.ready;
+        let sub = await reg.pushManager.getSubscription();
+        const want = b64uToBytes(PUSH_KEY);
+        const same = s => { try { const k = new Uint8Array(s.options.applicationServerKey); return k.length === want.length && k.every((v, i) => v === want[i]); } catch (e) { return false; } };
+        if (sub && !same(sub)) { await sub.unsubscribe(); sub = null; }
+        if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: want });
+        // The app saves it for whoever is signed in (pushfirst = stay on the Board, no Settings detour).
+        location.replace(MY_TASKS_URL + "?pushsub=" + encodeURIComponent(JSON.stringify(sub)) +
+          "&pushlabel=" + encodeURIComponent(deviceLabel()) + "&pushfirst=1");
+      } catch (e) {
+        $("pushMsg").textContent = "That didn't work (" + (e && e.message ? e.message : e) + "). You can turn notifications on later in the app: Menu, then Settings.";
+        setTimeout(() => location.replace(MY_TASKS_URL), 4000);
+      }
+    }
+    $("pushGo").addEventListener("click", turnOnPush);
+    $("pushSkip").addEventListener("click", e => { e.preventDefault(); markAsked(); location.replace(MY_TASKS_URL); });
+
+    if (isApp && canPush && Notification.permission === "default" && !pushAsked) {
+      $("pushView").hidden = false;   // first open on this device: ask once
+    } else if (isApp) {
       $("appView").hidden = false;
       // Go straight to My Tasks the first time. If the person comes back here (the app's back/close
       // button returns to this page), show a button instead of bouncing them out again.
